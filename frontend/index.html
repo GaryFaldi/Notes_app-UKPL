@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">NotesApp</span>
+        </div>
+        <p class="tagline">Catat. Simpan. Temukan.</p>
+      </div>
+
+      <div class="form-section">
+        <h2 class="form-title" id="form-title">Catatan Baru</h2>
+        <input type="hidden" id="edit-id" />
+        <div class="field-group">
+          <label>Judul</label>
+          <input type="text" id="input-judul" placeholder="Judul catatan..." />
+        </div>
+        <div class="field-group">
+          <label>Isi</label>
+          <textarea id="input-isi" placeholder="Tulis isinya di sini..."></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="btn-simpan" onclick="simpanCatatan()">Simpan</button>
+          <button class="btn-ghost" id="btn-batal" onclick="batalEdit()" style="display:none">Batal</button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
+          👤 <span id="user-display">User</span>
+        </div>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+        <span id="note-count">0 catatan</span>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="main-header">
+        <h1>Semua Catatan</h1>
+        <div class="search-wrap">
+          <input type="text" id="search-input" placeholder="Cari catatan..." oninput="filterCatatan()" />
+        </div>
+      </div>
+
+      <div id="notes-container" class="notes-grid">
+        <div class="empty-state">
+          <span class="empty-icon">📝</span>
+          <p>Belum ada catatan.<br/>Tambah yang pertama!</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL KONFIRMASI HAPUS -->
+  <div id="modal-hapus" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h3>Hapus Catatan?</h3>
+      <p>Tindakan ini tidak bisa dibatalkan.</p>
+      <div class="modal-btns">
+        <button class="btn-danger" onclick="konfirmasiHapus()">Hapus</button>
+        <button class="btn-ghost" onclick="tutupModal()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

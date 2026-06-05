@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Notes App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo" style="justify-content: center; margin-bottom: 12px;">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">NotesApp</span>
+        </div>
+        <p>Buat akun baru untuk mulai mencatat.</p>
+      </div>
+      
+      <form id="register-form" class="form-section">
+        <div class="field-group">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Pilih username" required />
+        </div>
+        <div class="field-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Buat password" required />
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Daftar Akun</button>
+      </form>
+
+      <div class="auth-footer">
+        Sudah punya akun? <a href="login.html">Login di sini</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="auth.js"></script>
+</body>
+</html>
