@@ -6,6 +6,7 @@
   <title>Notes App</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 </head>
 <body>
 
@@ -62,6 +63,62 @@
         </div>
       </div>
     </main>
+        <!-- DETAIL PANEL -->
+    <div id="detail-panel" class="detail-panel">
+      <div class="detail-header">
+        <button class="btn-back" onclick="tutupDetail()">
+          <i class="ti ti-arrow-left"></i>
+        </button>
+        <div class="detail-meta">
+          <h2 id="detail-judul" class="detail-judul"></h2>
+          <p id="detail-tanggal" class="detail-tanggal"></p>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-icon-sm btn-edit-detail" onclick="editDariDetail()">
+            <i class="ti ti-edit"></i>
+          </button>
+          <button class="btn-icon-sm btn-hapus-detail" onclick="hapusDariDetail()">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <p class="detail-section-label">Isi catatan</p>
+        <div id="detail-isi" class="detail-isi-content"></div>
+
+        <div class="detail-info-grid">
+          <div class="detail-info-card">
+            <p class="info-label">Dibuat pada</p>
+            <p id="detail-info-tanggal" class="info-val"></p>
+          </div>
+          <div class="detail-info-card">
+            <p class="info-label">ID catatan</p>
+            <p id="detail-info-id" class="info-val"></p>
+          </div>
+          <div class="detail-info-card">
+            <p class="info-label">Panjang isi</p>
+            <p id="detail-info-panjang" class="info-val"></p>
+          </div>
+          <div class="detail-info-card">
+            <p class="info-label">Pemilik</p>
+            <p id="detail-info-user" class="info-val"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-footer">
+        <button class="btn-primary" onclick="editDariDetail()">
+          <i class="ti ti-edit"></i> Edit catatan
+        </button>
+        <button class="btn-danger-outline" onclick="hapusDariDetail()">
+          <i class="ti ti-trash"></i> Hapus
+        </button>
+      </div>
+    </div>
+
+    <!-- OVERLAY untuk detail panel di mobile -->
+    <div id="detail-overlay" class="detail-overlay" onclick="tutupDetail()"></div>
   </div>
 
   <!-- MODAL KONFIRMASI HAPUS -->
@@ -75,7 +132,7 @@
       </div>
     </div>
   </div>
-
+  
   <!-- TOAST NOTIFICATION -->
   <div id="toast" class="toast"></div>
 

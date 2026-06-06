@@ -4,11 +4,12 @@ const BASE_URL = "http://localhost:3001"; // Mengarah ke backend lokal
 
 let allNotes = [];
 let deleteTargetId = null;
+let currentDetailId = null; // ID catatan yang sedang dibuka di detail panel
 
 // Cek Otentikasi sebelum memuat catatan
 const token = localStorage.getItem("token");
 if (!token) {
-  window.location.href = "login.html"; // Lempar ke halaman login jika tidak ada token
+  window.location.href = "login.html";
 }
 
 // Helper untuk headers request API
@@ -24,15 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("user-display").textContent = username;
   }
   muatCatatan();
+
+  // Tutup detail panel dengan tombol Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") tutupDetail();
+  });
 });
 
-// LOAD SEMUA CATATAN
+// ─── LOAD SEMUA CATATAN ────────────────────────────────────────────────────────
 async function muatCatatan() {
   try {
     const res = await fetch(`${BASE_URL}/notes`, { headers: getHeaders() });
     if (!res.ok) {
-        if(res.status === 401 || res.status === 403) return logout();
-        throw new Error("Gagal mengambil data");
+      if (res.status === 401 || res.status === 403) return logout();
+      throw new Error("Gagal mengambil data");
     }
     allNotes = await res.json();
     renderCatatan(allNotes);
@@ -42,7 +48,7 @@ async function muatCatatan() {
   }
 }
 
-// RENDER CATATAN KE GRID
+// ─── RENDER CATATAN KE GRID ────────────────────────────────────────────────────
 function renderCatatan(notes) {
   const container = document.getElementById("notes-container");
 
@@ -56,11 +62,11 @@ function renderCatatan(notes) {
   }
 
   container.innerHTML = notes.map((note, i) => `
-    <div class="note-card" style="animation-delay: ${i * 0.05}s">
+    <div class="note-card" style="animation-delay: ${i * 0.05}s" onclick="lihatDetail(${note.id})">
       <div class="note-judul">${escapeHtml(note.judul)}</div>
       <div class="note-isi">${escapeHtml(note.isi)}</div>
       <div class="note-meta">${formatTanggal(note.tanggal_dibuat)}</div>
-      <div class="note-actions">
+      <div class="note-actions" onclick="event.stopPropagation()">
         <button class="btn-edit" onclick="mulaiBukaEdit(${note.id})">✏️ Edit</button>
         <button class="btn-hapus" onclick="bukaModal(${note.id})">🗑️ Hapus</button>
       </div>
@@ -68,7 +74,7 @@ function renderCatatan(notes) {
   `).join("");
 }
 
-// SIMPAN CATATAN (Tambah atau Edit)
+// ─── SIMPAN CATATAN (Tambah atau Edit) ────────────────────────────────────────
 async function simpanCatatan() {
   const judul = document.getElementById("input-judul").value.trim();
   const isi = document.getElementById("input-isi").value.trim();
@@ -100,16 +106,16 @@ async function simpanCatatan() {
   }
 }
 
-// MULAI EDIT — isi form dari data yang ada
+// ─── MULAI EDIT — isi form dari data yang ada ─────────────────────────────────
 async function mulaiBukaEdit(id) {
   try {
-    const res = await fetch(`${BASE_URL}/notes/${id}`, { 
-      headers: getHeaders() // <-- TAMBAHKAN INI
+    const res = await fetch(`${BASE_URL}/notes/${id}`, {
+      headers: getHeaders()
     });
-    
+
     if (!res.ok) {
-        if(res.status === 401 || res.status === 403) return logout();
-        throw new Error("Gagal mengambil data catatan");
+      if (res.status === 401 || res.status === 403) return logout();
+      throw new Error("Gagal mengambil data catatan");
     }
     const note = await res.json();
 
@@ -119,14 +125,13 @@ async function mulaiBukaEdit(id) {
     document.getElementById("form-title").textContent = "Edit Catatan";
     document.getElementById("btn-batal").style.display = "block";
 
-    // Scroll ke form di mobile
     document.querySelector(".sidebar").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
     tampilToast("❌ " + err.message, "error");
   }
 }
 
-// BATAL EDIT
+// ─── BATAL EDIT ───────────────────────────────────────────────────────────────
 function batalEdit() {
   resetForm();
 }
@@ -139,7 +144,7 @@ function resetForm() {
   document.getElementById("btn-batal").style.display = "none";
 }
 
-// MODAL HAPUS
+// ─── MODAL HAPUS ──────────────────────────────────────────────────────────────
 function bukaModal(id) {
   deleteTargetId = id;
   document.getElementById("modal-hapus").style.display = "flex";
@@ -153,13 +158,15 @@ function tutupModal() {
 async function konfirmasiHapus() {
   if (!deleteTargetId) return;
   try {
-    const res = await fetch(`${BASE_URL}/notes/${deleteTargetId}`, { 
+    const res = await fetch(`${BASE_URL}/notes/${deleteTargetId}`, {
       method: "DELETE",
       headers: getHeaders()
     });
     if (!res.ok) throw new Error("Gagal menghapus");
     tampilToast("🗑️ Catatan dihapus", "success");
     tutupModal();
+    // Tutup detail panel juga jika catatan yang dihapus sedang dibuka
+    if (deleteTargetId === currentDetailId) tutupDetail();
     muatCatatan();
   } catch (err) {
     tampilToast("❌ " + err.message, "error");
@@ -167,7 +174,7 @@ async function konfirmasiHapus() {
   }
 }
 
-// SEARCH / FILTER
+// ─── SEARCH / FILTER ──────────────────────────────────────────────────────────
 function filterCatatan() {
   const keyword = document.getElementById("search-input").value.toLowerCase();
   const filtered = allNotes.filter(
@@ -178,7 +185,60 @@ function filterCatatan() {
   renderCatatan(filtered);
 }
 
-// HELPERS
+// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+
+async function lihatDetail(id) {
+  try {
+    const res = await fetch(`${BASE_URL}/notes/${id}`, { headers: getHeaders() });
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) return logout();
+      throw new Error("Gagal memuat catatan");
+    }
+    const note = await res.json();
+
+    currentDetailId = note.id;
+
+    // Isi konten panel
+    document.getElementById("detail-judul").textContent = note.judul;
+    document.getElementById("detail-isi").textContent = note.isi;
+
+    const tglFormat = formatTanggal(note.tanggal_dibuat);
+    document.getElementById("detail-tanggal").textContent = tglFormat;
+    document.getElementById("detail-info-tanggal").textContent = tglFormat;
+    document.getElementById("detail-info-id").textContent = `#${note.id}`;
+    document.getElementById("detail-info-panjang").textContent = `${note.isi.length} karakter`;
+    document.getElementById("detail-info-user").textContent =
+      localStorage.getItem("username") || "-";
+
+    // Buka panel
+    document.getElementById("detail-panel").classList.add("open");
+    document.getElementById("detail-overlay").classList.add("show");
+  } catch (err) {
+    tampilToast("❌ " + err.message, "error");
+  }
+}
+
+function tutupDetail() {
+  document.getElementById("detail-panel").classList.remove("open");
+  document.getElementById("detail-overlay").classList.remove("show");
+  currentDetailId = null;
+}
+
+function editDariDetail() {
+  const id = currentDetailId;
+  tutupDetail();
+  // Beri jeda singkat agar panel selesai menutup sebelum form di-scroll
+  setTimeout(() => mulaiBukaEdit(id), 250);
+}
+
+function hapusDariDetail() {
+  const id = currentDetailId;
+  tutupDetail();
+  setTimeout(() => bukaModal(id), 250);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
 function updateCount(n) {
   document.getElementById("note-count").textContent = `${n} catatan`;
 }
@@ -201,6 +261,7 @@ function escapeHtml(str) {
 
 function logout() {
   localStorage.removeItem("token");
+  localStorage.removeItem("username");
   window.location.href = "login.html";
 }
 
