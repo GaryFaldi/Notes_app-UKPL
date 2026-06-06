@@ -1055,7 +1055,132 @@ Frontend berjalan di `http://localhost:3000`
 
 ---
 
-## 🔐 **Alur Keamanan Lengkap**
+## � **Batasan Input & Tipe Data**
+
+### **1. Tabel Users (Registrasi & Login)**
+
+| Field | Tipe Data | Panjang Max | Frontend Validasi | Backend Validasi | Catatan |
+|-------|-----------|-------------|-------------------|------------------|---------|
+| **Username** | VARCHAR | 100 | ❌ Tidak ada | ✅ Kosong/tidak kosong | Harus UNIQUE, jika > 100 karakter akan dipotong DB |
+| **Password** | VARCHAR | 255 | ❌ Tidak ada | ✅ Kosong/tidak kosong | Disimpan dalam bentuk hash bcrypt (~60 char), tidak ada min length requirement |
+| **Tanggal Daftar** | TIMESTAMP | - | - | - | Otomatis terisi saat registrasi (CURRENT_TIMESTAMP) |
+
+**Contoh Error:**
+```
+✅ Username: john_doe (13 karakter) → BERHASIL
+✅ Username: a (1 karakter) → BERHASIL (tidak ada validasi minimum)
+❌ Username: user123 (sudah terdaftar) → ERROR "Username sudah terdaftar"
+✅ Password: 123 (3 karakter) → BERHASIL (tidak ada validasi minimum)
+```
+
+---
+
+### **2. Tabel Notes (CRUD Catatan)**
+
+| Field | Tipe Data | Panjang Max | Frontend Validasi | Backend Validasi | Catatan |
+|-------|-----------|-------------|-------------------|------------------|---------|
+| **Judul** | VARCHAR | 255 | ❌ Tidak ada | ✅ Kosong/tidak kosong | Jika > 255 karakter akan dipotong DB |
+| **Isi** | TEXT | ~65KB | ❌ Tidak ada | ✅ Kosong/tidak kosong | Praktis unlimited, cocok untuk catatan panjang |
+| **User ID** | INT | - | - | - | Otomatis diisi dari token (req.user.id) |
+| **Tanggal Dibuat** | TIMESTAMP | - | - | - | Otomatis terisi saat insert (CURRENT_TIMESTAMP) |
+
+**Contoh Error:**
+```
+✅ Judul: "Catatan Penting" (15 karakter) → BERHASIL
+✅ Judul: "a" (1 karakter) → BERHASIL (tidak ada validasi minimum)
+✅ Isi: "Lorem ipsum..." (sangat panjang, 10000+ karakter) → BERHASIL (tipe TEXT unlimited)
+❌ Judul: "" (kosong) → ERROR "Judul dan isi wajib diisi"
+❌ Isi: "" (kosong) → ERROR "Judul dan isi wajib diisi"
+```
+
+---
+
+### **3. Ringkasan Validasi yang Ada**
+
+**✅ Validasi yang Diterapkan:**
+1. Username & Password di `/register` → tidak boleh kosong
+2. Judul & Isi catatan → tidak boleh kosong
+3. Username harus UNIQUE di database (constraint)
+4. Token harus valid saat akses endpoint `/notes/*`
+
+**❌ Validasi yang TIDAK Diterapkan:**
+1. **Minimum length** → Bisa input 1 karakter
+2. **Maximum length** → Hanya terbatas DB schema, tidak ada validasi di aplikasi
+3. **Format validation** → Username tidak harus alphanumeric, bisa spasi, simbol, dll
+4. **Password strength** → Tidak ada requirement uppercase, number, special char, dll
+5. **Email validation** → Tidak ada, karena field username bukan email
+
+---
+
+### **4. Database Schema Lengkap**
+
+```sql
+-- Tabel USERS
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,                    -- Tipe: INT, Unique, Auto increment
+  username VARCHAR(100) UNIQUE NOT NULL,               -- Tipe: VARCHAR(100), Wajib unik & tidak null
+  password VARCHAR(255) NOT NULL,                      -- Tipe: VARCHAR(255), Wajib ada
+  tanggal_daftar TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- Tipe: TIMESTAMP, Otomatis
+);
+
+-- Tabel NOTES
+CREATE TABLE notes (
+  id INT AUTO_INCREMENT PRIMARY KEY,                           -- Tipe: INT, Unique, Auto increment
+  user_id INT NOT NULL,                                        -- Tipe: INT, Foreign Key ke users.id
+  judul VARCHAR(255) NOT NULL,                                 -- Tipe: VARCHAR(255), Wajib ada
+  isi TEXT NOT NULL,                                           -- Tipe: TEXT (~65KB), Wajib ada
+  tanggal_dibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- Tipe: TIMESTAMP, Otomatis
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Relasi & cascade delete
+);
+```
+
+**Penjelasan Tipe Data:**
+- `INT` → Integer (angka bulat), cocok untuk ID, user_id
+- `VARCHAR(n)` → String dengan panjang maksimal n karakter, efisien untuk data singkat
+- `TEXT` → String unlimited (praktis sampai 65KB), cocok untuk konten panjang
+- `TIMESTAMP` → Tanggal & waktu, otomatis terisi dengan waktu sekarang
+
+---
+
+### **5. Boundary Test Cases**
+
+**Username:**
+```
+Input: "a" → PASS (tidak ada minimum)
+Input: "john" → PASS
+Input: "john_doe_123_with_special_@#$" → PASS (tidak ada format validation)
+Input: "" → FAIL (kosong)
+Input: "username_dengan_karakter_sangat_panjang_lebih_dari_100_karakter_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" → PASS di frontend, POTONG di DB (truncate ke 100 char)
+Input: "user" + "user" (duplikat) → FAIL (UNIQUE constraint)
+```
+
+**Password:**
+```
+Input: "123" → PASS (tidak ada minimum)
+Input: "p" → PASS
+Input: "password_sangat_panjang_xxxxxxxxxxxxxxxxxxxxx" → PASS
+Input: "" → FAIL (kosong)
+```
+
+**Judul Catatan:**
+```
+Input: "a" → PASS
+Input: "Catatan Harian" → PASS
+Input: "judul_super_panjang_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" (>255) → PASS di frontend, POTONG di DB (truncate ke 255 char)
+Input: "" → FAIL (kosong)
+```
+
+**Isi Catatan:**
+```
+Input: "a" → PASS
+Input: "Lorem ipsum dolor sit amet..." → PASS
+Input: "konten_sangat_panjang_ribuan_karakter_xxxxxxxxxxxxxxxxxx..." (>65KB) → PASS
+Input: "" → FAIL (kosong)
+```
+
+---
+
+## �🔐 **Alur Keamanan Lengkap**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
