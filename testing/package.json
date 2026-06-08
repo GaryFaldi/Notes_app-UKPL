@@ -1,0 +1,22 @@
+{
+  "name": "notes-app-testing",
+  "version": "1.0.0",
+  "description": "STLC Testing Suite - Notes App UKPL",
+  "scripts": {
+    "test:unit": "jest unit/ --verbose --forceExit",
+    "test:unit:auth": "jest unit/auth.test.js --verbose --forceExit",
+    "test:unit:notes": "jest unit/notes.test.js --verbose --forceExit",
+    "test:integration": "jest integration/ --verbose --runInBand --forceExit",
+    "test:all": "jest --verbose --runInBand --forceExit",
+    "test:coverage": "jest --coverage --runInBand --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000,
+    "verbose": true
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
+  }
+}
